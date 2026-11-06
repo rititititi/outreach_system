@@ -12,7 +12,7 @@ const assert=require('node:assert/strict');const fs=require('node:fs');const vm=
  const document={querySelector(s){if(!elements.has(s))elements.set(s,el());return elements.get(s)},querySelectorAll(){return []}};
  let pdfCalled=0;
  const ctx=vm.createContext({document,localStorage:{getItem(){return null},setItem(){}},Intl,console,setTimeout,clearTimeout,window:{},URL,Blob,navigator:{},location:{protocol:'file:'},OrbitPDF:{async extract(file,progress){pdfCalled++;progress('Reading page 1');return 'Company: Test Labs\nProducts: Skincare products and ingredient-focused routines.'}},fetch(){throw Error('PDF must never call the Python endpoint')}});
- for(const f of ['engine.js','app.js'])vm.runInContext(fs.readFileSync(require('node:path').join(__dirname,'..',f),'utf8'),ctx);
+ for(const f of ['creator-data.js','engine.js','app.js'])vm.runInContext(fs.readFileSync(require('node:path').join(__dirname,'..',f),'utf8'),ctx);
  await vm.runInContext("readPortfolio({name:'test.pdf',size:100})",ctx);
  assert.equal(pdfCalled,1);assert.equal(vm.runInContext('pendingAnalysis.fields.brand',ctx),'Test Labs');assert.equal(vm.runInContext('uploadBusy',ctx),false);
  console.log('PASS: PDF extraction, cleanup, limits, scanned/encrypted errors, and standalone file:// upload without server fetch.');
