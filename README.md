@@ -1,54 +1,78 @@
-# outreach_system
+# outreach_system — Orbit
 
-Orbit is an interactive prototype for planning influencer and KOL partnerships.
+A company outreach hub that starts with a company portfolio, extracts a draft profile, and matches creators against the reviewed brief.
 
-## Run locally
+## Run the full app
 
-Open `index.html` directly in a browser, or serve the repository:
+Requires Python 3.10+; Node.js is needed only for the JavaScript checks.
 
 ```sh
-python -m http.server 8000
+git clone https://github.com/rititititi/outreach_system.git
+cd outreach_system
+python -m pip install -r requirements.txt
+python server.py
 ```
 
-Visit http://localhost:8000. There are no build steps or package dependencies. A single-file version is available at `standalone/Orbit.html`.
+Open **http://127.0.0.1:8000**. This server binds to localhost and is intended for local development, not public hosting. No API keys are needed.
 
-## Features
+## Company-first workflow
 
-- Editable company and campaign briefs
-- Fictional creator pool with search, category and platform filters
-- Rule-based creator fit scores and explanations
-- Shortlists and budget suggestions with a configurable reserve
-- CSV shortlist export
-- Editable outreach templates and manual partnership stages
-- Browser-local persistence
+1. Upload a portfolio (text-based PDF, DOCX, TXT, or Markdown), or paste a company overview.
+2. Review extracted company name, products, audience, market, industry, tone, keywords, exclusions, and any explicit campaign settings. Supporting excerpts appear alongside the fields. Missing fields stay blank.
+3. Confirm the profile, objective, platform, and USD budget.
+4. Explore scored creator profiles, build a shortlist, review the budget mix, export CSV, and prepare outreach drafts.
+
+The upload limit is 8 MB. Extracted text is limited to 120,000 characters; PDFs to 60 pages. Image-only/scanned portfolios need OCR text pasted into the app. Legacy DOC and PowerPoint files are not supported; export those to text-based PDF first. Encrypted PDFs are not supported.
+
+The parser understands labeled company details and industry keywords in English. It is a deterministic text analyzer, **not an LLM**. It cannot reliably interpret every free-form deck. Review is required; it does not silently invent missing markets, audiences, company names, or budgets. Only explicitly marked USD amounts are extracted; other currencies require manual conversion. Website URLs are recorded but not crawled.
+
+Confirming a replacement profile clears the active shortlist, drafts, and outreach stages. Editing the campaign brief afterward preserves these records.
+
+## Standalone option
+
+Open `standalone/Orbit.html` directly in a browser. Pasted content and TXT/Markdown uploads work without a server. PDF and DOCX extraction require `python server.py`; a static HTTP server alone does not provide the extraction endpoint.
+
+## Matching
+
+`engine.js` scores each profile out of 100:
+
+- Category relevance: 40 points
+- Exact content keyword overlap: up to 20 points
+- Audience-market match: 20 points
+- Preferred platform: 10 points
+- Engagement signal: up to 10 points
+
+The budget suggestion considers only profiles with matching market/platform, some content relevance, and no matched exclusion keywords. It selects greedily in score order while respecting the reserve. It is not an optimal portfolio solver. Scores are matching signals, not probabilities or sales predictions. Keyword exclusions cannot replace brand-safety review.
+
+**All creators, handles, audience metrics, and rates are still fictional demo data.** Live Instagram discovery, provider data, external AI, email sending, shared accounts, and campaign measurement are not connected.
+
+## Data handling
+
+Original files and full extracted text are processed in memory and not written to disk by the app. Saved company fields, source excerpts, and outreach records persist in this browser's localStorage (`orbit-v1`). They do not synchronize across devices. To remove them, clear this site's browser storage. No portfolio text is sent to an external AI service. Google Fonts may be requested by the stylesheet; system fonts work without them.
+
+The local server exposes only the app's explicit static assets and a same-origin extraction endpoint. Do not expose it publicly without authentication, request-rate and resource limits, secure deployment, and production document-processing controls.
 
 ## Project files
 
-- `index.html`: app shell
-- `style.css`: responsive interface styles (Google Fonts are optional external requests)
-- `app.js`: demo profiles, scoring, budget logic, drafts, and state management
-- `tests/check.cjs`: lightweight behavior checks using Node's built-in modules
-- `standalone/Orbit.html`: bundled app for opening as a single file
+- `index.html`, `style.css`, `app.js`: company onboarding and outreach hub
+- `engine.js`: shared portfolio extraction rules and creator scoring
+- `server.py`: local static server and in-memory PDF/DOCX extraction
+- `requirements.txt`: PDF parser dependency
+- `standalone/Orbit.html`: bundled browser app (text-only extraction)
+- `tests/`: behavior, extraction, and local API checks
 
-## Verification
+## Checks
 
 ```sh
 node --check app.js
+node --check engine.js
+node tests/engine.cjs
 node tests/check.cjs
+python -m unittest discover -s tests -p 'test_*.py'
 ```
 
-The behavior checks use a minimal DOM stub; they do not replace rendered browser or accessibility testing.
+JavaScript UI checks use a minimal DOM stub, not a rendered browser. Python checks cover actual text-based PDF and DOCX extraction, payload validation, origin checks, and blocked private-file routes. Rendered browser and accessibility testing remain outstanding.
 
-## Prototype limitations
+## Next integrations
 
-All creator identities, audiences, metrics, and rates are fictional. Rates are estimated USD fees per sponsored post. Rankings use structured campaign fields and explicit rules, not an AI model. The budget suggestion uses a greedy selection approach, not a mathematical optimum or a performance prediction.
-
-Data stays in this browser's localStorage; it is not synchronized across users or devices. The app does not scan websites, contact creators, send emails, authenticate users, or connect to live creator data. Outreach stage updates are manual records only.
-
-## Next implementation steps
-
-1. Add authentication, a shared database, and server-side campaign APIs.
-2. Add company website analysis with URL validation and SSRF protections.
-3. Integrate licensed creator data and record its source and freshness.
-4. Add authorized email sending, reviewed messages, opt-outs, and delivery tracking.
-5. Track campaign results with links, promo codes, and supported metrics.
+Add a production backend and identity, licensed/authorized creator records with field-level provenance, optional semantic analysis, then authorized email sending and performance tracking. Keep provider credentials server-side.
