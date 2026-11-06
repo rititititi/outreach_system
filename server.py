@@ -4,6 +4,7 @@ import binascii
 import io
 import json
 import zipfile
+from discovery import configured, search, DiscoveryError
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from xml.etree import ElementTree
@@ -69,6 +70,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         path = self.path.split('?')[0]
+        if path == '/api/discovery/status':
+            return self.respond(200, {'configured': configured(), 'provider': 'Modash', 'note': 'Configured does not verify provider access or credits.'})
         if path not in ASSETS:
             return self.respond(404, {'error': 'Not found'})
         file = ROOT / ASSETS[path]
@@ -76,6 +79,8 @@ class Handler(BaseHTTPRequestHandler):
         self.respond(200, file.read_bytes(), content_type)
 
     def do_POST(self):
+        if self.path == '/api/discovery/search':
+            return self.discover()
         if self.path != '/api/extract':
             return self.respond(404, {'error': 'Not found'})
         # Restrict cross-site browser requests to this local origin.
@@ -98,6 +103,24 @@ class Handler(BaseHTTPRequestHandler):
             self.respond(400, {'error': 'Cannot read this file. Use a text-based PDF, DOCX, or UTF-8 text file; check file size and contents.'})
         except Exception:
             self.respond(422, {'error': 'Document extraction failed. Try exporting to text or pasting the content.'})
+
+    def discover(self):
+        expected = 'http://' + self.headers.get('Host', '')
+        if self.headers.get('Origin') not in (None, expected):
+            return self.respond(403, {'error': 'Open discovery from this server.'})
+        try:
+            size = int(self.headers.get('Content-Length', '0'))
+            if not 0 < size <= 16384:
+                return self.respond(413, {'error': 'Search request must be 16 KB or smaller.'})
+            if self.headers.get('Content-Type', '').split(';')[0] != 'application/json':
+                return self.respond(415, {'error': 'Expected JSON.'})
+            self.respond(200, search(json.loads(self.rfile.read(size))))
+        except ValueError as exc:
+            self.respond(400, {'error': str(exc)[:250]})
+        except DiscoveryError as exc:
+            self.respond(exc.status, {'error': str(exc)})
+        except Exception:
+            self.respond(502, {'error': 'Discovery failed. Check server setup and provider availability.'})
 
     def log_message(self, fmt, *args):
         # Avoid logging document contents or user filenames.

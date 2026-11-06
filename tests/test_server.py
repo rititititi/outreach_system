@@ -4,6 +4,8 @@ import json
 import sys
 import threading
 import unittest
+import os
+from unittest.mock import patch
 import urllib.error
 import urllib.request
 import zipfile
@@ -62,6 +64,17 @@ class APITests(unittest.TestCase):
         for p in ['/server.py','/.git/config','/README.md','/../server.py']:self.assertEqual(self.request(p)[0],404)
     def test_invalid_payload(self):
         for body in [{},{'name':'x.txt','data':'%%%INVALID%%%'},['bad']]:self.assertEqual(self.request('/api/extract',body)[0],400)
+    def test_discovery_routes(self):
+        with patch.dict(os.environ, {'MODASH_API_KEY': ''}):
+            code, body = self.request('/api/discovery/status')
+            self.assertEqual(code, 200)
+            self.assertFalse(json.loads(body)['configured'])
+            code, body = self.request('/api/discovery/search', {'query': 'skincare'}, self.url)
+            self.assertEqual(code, 503)
+            self.assertIn('MODASH_API_KEY', json.loads(body)['error'])
+            self.assertEqual(self.request('/api/discovery/search', {'query': 'skincare'}, 'https://other.example')[0], 403)
+            self.assertEqual(self.request('/api/discovery/search', {'query': ''}, self.url)[0], 400)
+
     def test_app(self):
         self.assertEqual(self.request('/')[0],200)
         self.assertEqual(self.request('/engine.js')[0],200)

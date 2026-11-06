@@ -50,7 +50,11 @@ The budget suggestion considers only profiles with supplied matching audience ma
 
 **The default catalog now contains six real public creators**, researched from creator-owned sites or their talent-agency pages. Every record has social-profile and source links. See `SOURCES.md`. Sources support identity links and public content summaries, not partnership availability or verified audience data. No follower counts, views, engagement rates, audience countries, or fees are invented.
 
-This is a small curated catalog, **not automatic live Instagram discovery**. Direct Instagram reads were blocked/rate limited during research. The app provides a profile-based public web search link that opens externally; it does not fetch those results into the catalog. A licensed provider or an authorized search/API integration is still needed for broad automatic discovery. External AI, email sending, shared accounts, and campaign measurement are not connected.
+This is a small curated catalog, **not automatic live Instagram discovery**. Direct Instagram reads were blocked/rate limited during research. The app provides a profile-based public web search link that opens externally; it does not fetch those results into the catalog. The Modash backend connector can search broader provider coverage after you configure Discovery API access; it is currently unconfigured and not live-validated. It does not scan every Instagram account or supply audience geography and fees. External AI, email sending, shared accounts, and campaign measurement are not connected.
+
+## Broader Instagram discovery
+
+Click **Search Instagram index** in Discover creators to use the new Modash connector. It requires an entitled Modash Discovery API account and a server-side `MODASH_API_KEY`. [Connection instructions](DISCOVERY.md) include a hidden-key launcher and hosting requirements. The connector is implemented and mocked-contract-tested, but not activated or live-tested without a key. Standalone PDF uploads still work without a backend.
 
 ## Add real creators
 
@@ -81,6 +85,7 @@ The local server exposes only the app's explicit static assets and a same-origin
 - `engine.js`: shared portfolio extraction rules and creator scoring
 - `creator-data.js`: real starter catalog, provenance, and import validation
 - `SOURCES.md`: researched identity/content sources and limitations
+- `discovery.py`, `start_discovery.py`, `DISCOVERY.md`: provider connector, hidden-key launcher, and connection instructions
 - `pdf-reader.js`: browser-local PDF extraction using pinned PDF.js (Apache-2.0)
 - `server.py`: local static server and in-memory PDF/DOCX extraction
 - `requirements.txt`: PDF parser dependency
@@ -92,6 +97,7 @@ The local server exposes only the app's explicit static assets and a same-origin
 ```sh
 node --check app.js
 node --check engine.js
+node tests/discovery.cjs
 node tests/creators.cjs
 node tests/pdf-reader.cjs
 node tests/engine.cjs
