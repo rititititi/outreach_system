@@ -2,7 +2,11 @@
 
 A company outreach hub that starts with a company portfolio, extracts a draft profile, and matches creators against the reviewed brief.
 
-## Run the full app
+## Open without installing anything
+
+Download `standalone/Orbit.html` and open it in your browser. You can upload text-based PDFs directly, as well as TXT/Markdown, or paste content. No Python, API key, or server is needed for PDF uploads. An internet connection is required to load the pinned PDF.js reader from jsDelivr. PDF contents are processed on your device and are not uploaded.
+
+## Run the full app (optional, adds Word uploads)
 
 Requires Python 3.10+; Node.js is needed only for the JavaScript checks.
 
@@ -30,7 +34,7 @@ Confirming a replacement profile clears the active shortlist, drafts, and outrea
 
 ## Standalone option
 
-Open `standalone/Orbit.html` directly in a browser. Pasted content and TXT/Markdown uploads work without a server. PDF and DOCX extraction require `python server.py`; a static HTTP server alone does not provide the extraction endpoint.
+Open `standalone/Orbit.html` directly in a browser. Pasted content, PDFs, and TXT/Markdown uploads work without a server. PDF extraction runs in the browser, including when opened as a local file. DOCX extraction still requires `python server.py`; alternatively export Word files to PDF. A static HTTP server supports PDF uploads too.
 
 ## Matching
 
@@ -48,7 +52,7 @@ The budget suggestion considers only profiles with matching market/platform, som
 
 ## Data handling
 
-Original files and full extracted text are processed in memory and not written to disk by the app. Saved company fields, source excerpts, and outreach records persist in this browser's localStorage (`orbit-v1`). They do not synchronize across devices. To remove them, clear this site's browser storage. No portfolio text is sent to an external AI service. Google Fonts may be requested by the stylesheet; system fonts work without them.
+Original files and full extracted text are processed in memory and not written to disk by the app. Saved company fields, source excerpts, and outreach records persist in this browser's localStorage (`orbit-v1`). They do not synchronize across devices. To remove them, clear this site's browser storage. No portfolio text is sent to an external AI service. Google Fonts may be requested by the stylesheet; system fonts work without them. PDF uploads load PDF.js 4.10.38 and its worker from jsDelivr (internet required); no PDF bytes are sent to that CDN. Image-only PDFs still need OCR; password-protected PDFs must be unlocked first.
 
 The local server exposes only the app's explicit static assets and a same-origin extraction endpoint. Do not expose it publicly without authentication, request-rate and resource limits, secure deployment, and production document-processing controls.
 
@@ -56,6 +60,7 @@ The local server exposes only the app's explicit static assets and a same-origin
 
 - `index.html`, `style.css`, `app.js`: company onboarding and outreach hub
 - `engine.js`: shared portfolio extraction rules and creator scoring
+- `pdf-reader.js`: browser-local PDF extraction using pinned PDF.js (Apache-2.0)
 - `server.py`: local static server and in-memory PDF/DOCX extraction
 - `requirements.txt`: PDF parser dependency
 - `standalone/Orbit.html`: bundled browser app (text-only extraction)
@@ -66,6 +71,7 @@ The local server exposes only the app's explicit static assets and a same-origin
 ```sh
 node --check app.js
 node --check engine.js
+node tests/pdf-reader.cjs
 node tests/engine.cjs
 node tests/check.cjs
 python -m unittest discover -s tests -p 'test_*.py'

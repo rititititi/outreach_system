@@ -11,7 +11,7 @@ from xml.etree import ElementTree
 ROOT = Path(__file__).resolve().parent
 MAX_FILE = 8 * 1024 * 1024
 MAX_TEXT = 120000
-ASSETS = {'/': 'index.html', '/index.html': 'index.html', '/style.css': 'style.css', '/app.js': 'app.js', '/engine.js': 'engine.js'}
+ASSETS = {'/': 'index.html', '/index.html': 'index.html', '/style.css': 'style.css', '/app.js': 'app.js', '/engine.js': 'engine.js', '/pdf-reader.js': 'pdf-reader.js'}
 
 
 def extract_text(name, data):
